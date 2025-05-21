@@ -6,6 +6,8 @@ import { OrderService } from '../../../orders/services/order.service';
 import { Customer } from '../../models/customer.model';
 import { Order } from '../../../orders/models/order.model';
 import { CustomerService } from '../../models/customers/services/customer.service';
+import { LoyaltyService } from '../../models/customers/services/loyalty.service';
+import { LoyaltyActivity } from '../../models/loyalty-activity.model';
 
 @Component({
   selector: 'app-customer-detail',
@@ -73,7 +75,137 @@ import { CustomerService } from '../../models/customers/services/customer.servic
             </button>
           </div>
         </div>
+        <!-- In src/app/features/customers/components/customer-detail/customer-detail.component.ts -->
+<!-- Add this after the customer profile card and before the orders section -->
+
+<!-- Loyalty Program Card -->
+<div *ngIf="customer" class="bg-white rounded-lg shadow-md p-6 mb-6">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-lg font-bold text-gray-800">Loyalty Program</h2>
+    <span [class]="'text-xs px-2.5 py-0.5 rounded-full ' + getLoyaltyTierColor(customer.loyaltyTier)">
+      {{getLoyaltyBadgeText(customer)}}
+    </span>
+  </div>
+  
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+    <div class="p-3 bg-gray-50 rounded-lg">
+      <div class="text-sm text-gray-500">Points Balance</div>
+      <div class="text-xl font-bold">{{customer.loyaltyPoints || 0}}</div>
+    </div>
+    
+    <div class="p-3 bg-gray-50 rounded-lg">
+      <div class="text-sm text-gray-500">Lifetime Value</div>
+      <div class="text-xl font-bold">{{customer.lifetimePurchaseValue | currency}}</div>
+    </div>
+    
+    <div class="p-3 bg-gray-50 rounded-lg">
+      <div class="text-sm text-gray-500">Completed Orders</div>
+      <div class="text-xl font-bold">{{customer.completedOrders || 0}}</div>
+    </div>
+    
+    <div class="p-3 bg-gray-50 rounded-lg">
+      <div class="text-sm text-gray-500">Discount</div>
+      <div class="text-xl font-bold">{{(customer.discountPercentage || 0) * 100}}%</div>
+    </div>
+  </div>
+  
+  <div class="bg-blue-50 p-4 rounded-lg mb-4">
+    <div class="flex items-start">
+      <div class="rounded-full bg-blue-100 text-blue-600 p-2 mr-3">
+        <i class="fas fa-info-circle"></i>
+      </div>
+      <div>
+        <h3 class="font-medium text-blue-700">Next Tier Progress</h3>
+        <p class="text-sm text-blue-600 mt-1">
+          <ng-container *ngIf="customer.loyaltyTier === 'PLATINUM'">
+            Congratulations! You've reached the highest tier.
+          </ng-container>
+          <ng-container *ngIf="customer.loyaltyTier !== 'PLATINUM'">
+            <ng-container *ngIf="customer.loyaltyTier === 'STANDARD'">
+              Earn {{1000 - (customer.loyaltyPoints || 0)}} more points to reach Silver tier.
+            </ng-container>
+            <ng-container *ngIf="customer.loyaltyTier === 'SILVER'">
+              Earn {{5000 - (customer.loyaltyPoints || 0)}} more points to reach Gold tier.
+            </ng-container>
+            <ng-container *ngIf="customer.loyaltyTier === 'GOLD'">
+              Earn {{10000 - (customer.loyaltyPoints || 0)}} more points to reach Platinum tier.
+            </ng-container>
+          </ng-container>
+        </p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Admin Actions -->
+  <div class="border-t border-gray-200 pt-4">
+    <h3 class="text-md font-medium text-gray-700 mb-2">Admin Actions</h3>
+    <div class="flex space-x-2">
+      <button (click)="awardLoyaltyPoints(100)" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">
+        +100 Points
+      </button>
+      <button (click)="awardLoyaltyPoints(500)" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">
+        +500 Points
+      </button>
+      <button (click)="awardLoyaltyPoints(-100)" class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">
+        -100 Points
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Loyalty Activity History -->
+<div *ngIf="customer" class="bg-white rounded-lg shadow-md p-6 mb-6">
+  <h2 class="text-lg font-bold text-gray-800 mb-4">Loyalty Activity History</h2>
+  
+  <div class="overflow-x-auto">
+    <table class="min-w-full bg-white">
+      <thead class="bg-gray-50 text-gray-600 text-xs uppercase">
+        <tr>
+          <th class="py-2 px-4 text-left">Date</th>
+          <th class="py-2 px-4 text-left">Activity</th>
+          <th class="py-2 px-4 text-left">Reference</th>
+          <th class="py-2 px-4 text-right">Points</th>
+          <th class="py-2 px-4 text-right">Amount</th>
+        </tr>
+      </thead>
+      <tbody class="text-gray-600 text-sm">
+        <tr *ngFor="let activity of loyaltyActivities" class="border-b border-gray-100">
+          <td class="py-2 px-4 text-left">{{activity.createdAt | date:'medium'}}</td>
+          <td class="py-2 px-4 text-left">
+            <span [class]="'inline-block px-2 py-1 text-xs rounded ' + getActivityTypeClass(activity.type)">
+              {{formatActivityType(activity.type)}}
+            </span>
+            <span class="block text-gray-500 text-xs mt-1">{{activity.description}}</span>
+          </td>
+          <td class="py-2 px-4 text-left">
+            <a *ngIf="activity.type === 'PURCHASE' && activity.referenceId" 
+               [routerLink]="['/orders', activity.referenceId]"
+               class="text-blue-600 hover:underline">
+              Order #{{activity.referenceId}}
+            </a>
+            <span *ngIf="activity.type !== 'PURCHASE' || !activity.referenceId">
+              -
+            </span>
+          </td>
+          <td class="py-2 px-4 text-right font-medium" 
+              [class.text-green-600]="activity.points > 0"
+              [class.text-red-600]="activity.points < 0">
+            {{activity.points > 0 ? '+' : ''}}{{activity.points}}
+          </td>
+          <td class="py-2 px-4 text-right">
+            {{activity.amount ? (activity.amount | currency) : '-'}}
+          </td>
+        </tr>
         
+        <tr *ngIf="loyaltyActivities.length === 0">
+          <td colspan="5" class="py-4 text-center text-gray-500">
+            No loyalty activity yet
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
         <!-- Orders and Stats -->
         <div class="md:col-span-2">
           <!-- Stats Cards -->
@@ -199,21 +331,81 @@ export class CustomerDetailComponent implements OnInit {
   customer: Customer | null = null;
   customerOrders: Order[] = [];
   showDeleteModal: boolean = false;
-  
+  loyaltyActivities: LoyaltyActivity[] = [];
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private customerService: CustomerService,
-    private orderService: OrderService
+    private orderService: OrderService,
+    private loyaltyService: LoyaltyService
   ) {}
   
   ngOnInit(): void {
-    this.route.params.subscribe(params => {
-      if (params['id']) {
-        this.loadCustomer(+params['id']);
-      }
-    });
+  this.route.params.subscribe(params => {
+    if (params['id']) {
+      this.loadCustomer(+params['id']);
+      this.loadCustomerOrders(+params['id']);
+      this.loadLoyaltyActivities(+params['id']);
+    }
+  });
+}
+getLoyaltyTierColor(tier?: string): string {
+  if (!tier) return 'bg-gray-100 text-gray-800';
+  
+  switch (tier) {
+    case 'SILVER':
+      return 'bg-gray-200 text-gray-800';
+    case 'GOLD':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'PLATINUM':
+      return 'bg-purple-100 text-purple-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
   }
+}
+
+loadLoyaltyActivities(customerId: number): void {
+  this.loyaltyService.getLoyaltyActivities(customerId).subscribe(
+    (activities) => {
+      this.loyaltyActivities = activities;
+    },
+    (error) => {
+      console.error('Error loading loyalty activities', error);
+    }
+  );
+}
+getLoyaltyBadgeText(customer: Customer): string {
+  if (!customer.loyaltyTier) return 'Standard';
+  
+  // Format the string to be title case (e.g., "GOLD" becomes "Gold")
+  return customer.loyaltyTier.charAt(0) + customer.loyaltyTier.slice(1).toLowerCase();
+}
+
+// Add a method to award manual loyalty points
+awardLoyaltyPoints(points: number, type: string = 'PROMOTIONAL'): void {
+  if (!this.customer?.id) return;
+  
+  const activity: LoyaltyActivity = {
+    customerId: this.customer.id,
+    type: type,
+    points: points,
+    description: `Manual points adjustment by admin`,
+    createdAt: new Date() // Add this line to fix the error
+  };
+  
+  this.loyaltyService.addLoyaltyPoints(this.customer.id, activity).subscribe(
+    (updatedCustomer) => {
+      // Update the customer object with new loyalty info
+      this.customer = { ...this.customer, ...updatedCustomer };
+      this.loadLoyaltyActivities(this.customer.id!);
+      // Show success notification
+    },
+    (error) => {
+      console.error('Error awarding loyalty points', error);
+      // Show error notification
+    }
+  );
+}
   
   loadCustomer(id: number): void {
     this.customerService.getCustomerById(id).subscribe(
@@ -245,7 +437,35 @@ export class CustomerDetailComponent implements OnInit {
       }
     );
   }
+  // Add these methods to CustomerDetailComponent
+getActivityTypeClass(type?: string): string {
+  if (!type) return 'bg-gray-100 text-gray-800';
   
+  switch (type) {
+    case 'PURCHASE':
+      return 'bg-green-100 text-green-800';
+    case 'REFUND':
+      return 'bg-red-100 text-red-800';
+    case 'ACCOUNT_CREATION':
+      return 'bg-blue-100 text-blue-800';
+    case 'REFERRAL':
+      return 'bg-purple-100 text-purple-800';
+    case 'PROMOTIONAL':
+      return 'bg-yellow-100 text-yellow-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+}
+
+formatActivityType(type?: string): string {
+  if (!type) return 'Unknown';
+  
+  // Convert e.g. "ACCOUNT_CREATION" to "Account Creation"
+  return type.toLowerCase()
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
   getInitials(customer: Customer): string {
     return `${customer.firstName.charAt(0)}${customer.lastName.charAt(0)}`;
   }

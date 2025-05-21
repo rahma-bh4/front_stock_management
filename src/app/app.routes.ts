@@ -28,7 +28,12 @@ export const routes: Routes = [
     loadChildren: () => import('./orders.routes').then(mod => mod.INVOICE_ROUTES)
   },
   {
+    path: 'analytics',
+    loadComponent: () => import('./features/analytics/product-analytics/product-analytics.component').then(m => m.ProductAnalyticsComponent)
+  },
+  {
     path: '**',
     redirectTo: 'dashboard'
-  }
+  },
+   
 ];

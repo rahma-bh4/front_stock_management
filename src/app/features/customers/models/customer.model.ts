@@ -8,4 +8,12 @@ export interface Customer {
   city?: string;
   country?: string;
   postalCode?: string;
+
+  
+  loyaltyPoints?: number;
+  loyaltyTier?: string;
+  tierUpdatedAt?: Date;
+  lifetimePurchaseValue?: number;
+  completedOrders?: number;
+  discountPercentage?: number;
 }

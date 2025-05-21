@@ -6,6 +6,8 @@ export interface Order {
   status?: OrderStatus;
   totalAmount?: number;
   items: OrderItem[];
+  discountPercentage?: number;
+  discountAmount?: number;
 }
 
 export interface OrderItem {

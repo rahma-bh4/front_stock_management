@@ -9,6 +9,8 @@ import { ProductService } from '../../products/services/product.service';
 import { Customer } from '../../customers/models/customer.model';
 import { Product } from '../../products/models/product.model';
 import { Order, OrderItem, OrderStatus } from '../models/order.model';
+import { LoyaltyService } from '../../customers/models/customers/services/loyalty.service';
+
 
 
 @Component({
@@ -179,6 +181,43 @@ import { Order, OrderItem, OrderStatus } from '../models/order.model';
               <span class="font-bold">{{calculateTotal() | currency}}</span>
             </div>
           </div>
+          <!-- Add this to the Order Summary section in order-form.component.ts template -->
+<div class="mb-6 p-4 bg-gray-50 rounded-md">
+  <h3 class="font-medium text-gray-700 mb-2">Order Summary</h3>
+  
+  <div *ngIf="customerLoyaltyInfo" class="mb-3 p-3 bg-blue-50 rounded-md">
+    <div class="flex items-center">
+      <div class="p-2 rounded-full bg-blue-100 text-blue-600 mr-2">
+        <i class="fas fa-tag"></i>
+      </div>
+      <div>
+        <div class="text-sm font-medium text-blue-700">
+          {{customerLoyaltyInfo.firstName}} {{customerLoyaltyInfo.lastName}} is a 
+          {{customerLoyaltyInfo.loyaltyTier?.charAt(0) + customerLoyaltyInfo.loyaltyTier?.slice(1).toLowerCase()}} 
+          tier customer
+        </div>
+        <div class="text-xs text-blue-600">
+          {{customerLoyaltyInfo.loyaltyPoints}} points | {{customerLoyaltyInfo.discountPercentage * 100}}% discount applied
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="flex justify-between py-2 border-t border-gray-200">
+    <span>Subtotal</span>
+    <span>{{calculateSubtotal() | currency}}</span>
+  </div>
+  
+  <div *ngIf="discountAmount > 0" class="flex justify-between py-2 text-green-600">
+    <span>Loyalty Discount ({{discountPercentage * 100}}%)</span>
+    <span>-{{discountAmount | currency}}</span>
+  </div>
+  
+  <div class="flex justify-between py-2 border-t font-bold">
+    <span>Total</span>
+    <span>{{calculateTotal() | currency}}</span>
+  </div>
+</div>
           
           <div class="mt-8 flex justify-end space-x-3">
             <button 
@@ -220,15 +259,19 @@ export class OrderFormComponent implements OnInit {
   // Related data
   customers: Customer[] = [];
   products: Product[] = [];
-  
+  customerLoyaltyInfo: any = null;
+discountPercentage: number = 0;
+discountAmount: number = 0;
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
     private orderService: OrderService,
-    private customerService: CustomerService,
-    private productService: ProductService
+    private productService: ProductService,
+    private loyaltyService: LoyaltyService,
+    private customerService: CustomerService
   ) {}
+
   
   ngOnInit(): void {
     this.initForm();
@@ -252,7 +295,13 @@ export class OrderFormComponent implements OnInit {
       }
     });
   }
-  
+  // Add this method to OrderFormComponent
+calculateSubtotal(): number {
+  return this.items.controls.reduce((total, control) => {
+    const itemGroup = control as FormGroup;
+    return total + (itemGroup.get('subtotal')?.value || 0);
+  }, 0);
+}
   initForm(): void {
     this.orderForm = this.fb.group({
       customerId: [null, Validators.required],
@@ -340,8 +389,35 @@ export class OrderFormComponent implements OnInit {
   }
   
   onCustomerChange(): void {
-    // Additional logic if needed when customer changes
+  const customerId = this.orderForm.get('customerId')?.value;
+  if (customerId) {
+    this.loadCustomerLoyaltyInfo(customerId);
+  } else {
+    this.customerLoyaltyInfo = null;
+    this.discountPercentage = 0;
+    this.discountAmount = 0;
+    this.updateTotalAmount();
   }
+}
+
+// In your order-form.component.ts
+loadCustomerLoyaltyInfo(customerId: number): void {
+  this.loyaltyService.getLoyaltyInfo(customerId).subscribe(
+    (customerInfo) => {
+      this.customerLoyaltyInfo = customerInfo;
+      this.discountPercentage = customerInfo.discountPercentage || 0;
+      this.updateTotalAmount();
+    },
+    (error) => {
+      console.error('Error loading customer loyalty info', error);
+      // Set default values and continue without showing error to user
+      this.customerLoyaltyInfo = null;
+      this.discountPercentage = 0;
+      this.discountAmount = 0;
+      this.updateTotalAmount();
+    }
+  );
+}
   
   onProductChange(index: number): void {
     const itemGroup = this.items.at(index) as FormGroup;
@@ -380,11 +456,16 @@ export class OrderFormComponent implements OnInit {
   }
   
   calculateTotal(): number {
-    return this.items.controls.reduce((total, control) => {
-      const itemGroup = control as FormGroup;
-      return total + (itemGroup.get('subtotal')?.value || 0);
-    }, 0);
-  }
+  const subtotal = this.items.controls.reduce((total, control) => {
+    const itemGroup = control as FormGroup;
+    return total + (itemGroup.get('subtotal')?.value || 0);
+  }, 0);
+  
+  // Apply loyalty discount if available
+  this.discountAmount = subtotal * this.discountPercentage;
+  
+  return subtotal - this.discountAmount;
+}
   
   updateTotalAmount(): void {
     // Just trigger change detection, the total is computed on-the-fly
