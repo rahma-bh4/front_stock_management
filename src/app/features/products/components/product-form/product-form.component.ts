@@ -233,40 +233,62 @@ export class ProductFormComponent implements OnInit {
     );
   }
   
-  onSubmit(): void {
-    if (this.productForm.invalid) return;
-    
-    this.isSubmitting = true;
-    const productData: Product = this.productForm.value;
-    
-    const saveProduct = () => {
-      if (this.isEditMode && this.productId) {
-        this.productService.updateProduct(this.productId, productData).subscribe(
-          this.handleSuccess.bind(this),
-          this.handleError.bind(this)
-        );
-      } else {
-        this.productService.createProduct(productData).subscribe(
-          (product) => {
-            // If we have an image and a new product ID, upload the image
-            if (this.selectedImage && product.id) {
-              this.uploadProductImage(product.id);
-            } else {
-              this.handleSuccess(product);
-            }
-          },
-          this.handleError.bind(this)
-        );
-      }
-    };
-    
-    // If we're in edit mode and have a new image, upload it first
-    if (this.isEditMode && this.selectedImage && this.productId) {
-      this.uploadProductImage(this.productId, saveProduct);
-    } else {
-      saveProduct();
-    }
+onSubmit(): void {
+  if (this.productForm.invalid) return;
+  
+  this.isSubmitting = true;
+  
+  // Create a copy of the form data
+  const productData: Product = {...this.productForm.value};
+  
+  // IMPORTANT: If there's a selected image, don't send the imageUrl in the initial product creation
+  if (this.selectedImage) {
+    // Set to empty or null to prevent sending any large image data
+    productData.imageUrl = '';
   }
+  
+  if (this.isEditMode && this.productId) {
+    // Update existing product
+    this.productService.updateProduct(this.productId, productData).subscribe(
+      (product) => {
+        if (this.selectedImage && this.productId) {
+          this.uploadImage(this.productId, product);
+        } else {
+          this.handleSuccess(product);
+        }
+      },
+      this.handleError.bind(this)
+    );
+  } else {
+    // Create new product
+    this.productService.createProduct(productData).subscribe(
+      (product) => {
+        if (this.selectedImage && product.id) {
+          this.uploadImage(product.id, product);
+        } else {
+          this.handleSuccess(product);
+        }
+      },
+      this.handleError.bind(this)
+    );
+  }
+}
+uploadImage(productId: number, product: Product): void {
+  this.productService.uploadProductImage(productId, this.selectedImage!).subscribe(
+    (response) => {
+      // Update product with new image URL if it's in the response
+      if (response && response.imageUrl) {
+        product.imageUrl = response.imageUrl;
+      }
+      this.handleSuccess(product);
+    },
+    (error) => {
+      console.error('Error uploading image', error);
+      // Still proceed with success even if image upload fails
+      this.handleSuccess(product);
+    }
+  );
+}
   
   uploadProductImage(productId: number, callback?: () => void): void {
     if (!this.selectedImage) return;
@@ -313,18 +335,22 @@ export class ProductFormComponent implements OnInit {
     return field ? field.invalid && (field.dirty || field.touched) : false;
   }
   
-  onImageSelected(file: File): void {
-    this.selectedImage = file;
-    
-    // Create a preview URL
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      this.productForm.patchValue({ 
-        imageUrl: reader.result as string 
-      });
-    };
-    reader.readAsDataURL(file);
-  }
+ onImageSelected(file: File): void {
+  this.selectedImage = file;
+  
+  // IMPORTANT: Don't set the dataURL as the imageUrl value
+  // The current code likely does something like:
+  // reader.onload = (e) => {
+  //   this.productForm.patchValue({ 
+  //     imageUrl: reader.result as string  // This is sending the base64 data to your API
+  //   });
+  // };
+  
+  // Instead, just set a placeholder or leave it empty
+  this.productForm.patchValue({ 
+    imageUrl: 'pending-upload'  // Just a placeholder, not the actual image data
+  });
+}
   
   onImageRemoved(): void {
     this.selectedImage = null;

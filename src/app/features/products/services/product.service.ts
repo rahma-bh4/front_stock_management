@@ -44,10 +44,10 @@ export class ProductService {
     return this.http.get<Product[]>(`${this.apiUrl}/low-stock?threshold=${threshold}`);
   }
 
-  uploadProductImage(productId: number, imageFile: File): Observable<any> {
-    const formData = new FormData();
-    formData.append('image', imageFile);
-    
-    return this.http.post<any>(`${this.apiUrl}/${productId}/upload-image`, formData);
-  }
+uploadProductImage(productId: number, imageFile: File): Observable<any> {
+  const formData = new FormData();
+  formData.append('image', imageFile);
+  
+  return this.http.post<any>(`${this.apiUrl}/${productId}/upload-image`, formData);
+}
 }
