@@ -2,10 +2,29 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>StockManagementFrontend</title>
+  <title>Stock Management System</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  
+  <!-- Ajoutez Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Configuration de Tailwind (optionnel) -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3f51b5',
+            secondary: '#f44336',
+            accent: '#4caf50',
+            warn: '#ff9800',
+          }
+        }
+      }
+    }
+  </script>
 </head>
 <body>
   <app-root></app-root>
