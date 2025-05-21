@@ -4,5 +4,6 @@ export const environment = {
   productApi: 'http://localhost:8085/api/products',
   customerApi: 'http://localhost:8085/api/customers',
   orderApi: 'http://localhost:8085/api/orders',
-  invoiceApi: 'http://localhost:8085/api/invoices'
+  invoiceApi: 'http://localhost:8085/api/invoices',
+  fileServerUrl: 'http://localhost:8081'
 };

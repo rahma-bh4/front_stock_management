@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../services/product.service';
 import { Product } from '../../models/product.model';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-product-list',
@@ -80,9 +81,9 @@ import { Product } from '../../models/product.model';
                 <td class="py-3 px-6 text-left whitespace-nowrap">
                   <div class="flex items-center">
                     <div class="w-12 h-12 flex-shrink-0 mr-2">
-                      <img [src]="product.imageUrl || 'assets/images/product-placeholder.png'" 
-                           [alt]="product.name"
-                           class="w-12 h-12 rounded-md object-cover">
+                     <img [src]="product.imageUrl ? (apiBaseUrl + product.imageUrl) : '../../../../../assets/images/product-placeholder.png'" 
+     [alt]="product.name"
+     class="w-12 h-12 rounded-md object-cover">
                     </div>
                   </div>
                 </td>
@@ -235,7 +236,7 @@ export class ProductListComponent implements OnInit {
   
   // Stats
   lowStockCount: number = 0;
-  
+   apiBaseUrl = environment.fileServerUrl;
   // Categories
   categories: string[] = [];
   

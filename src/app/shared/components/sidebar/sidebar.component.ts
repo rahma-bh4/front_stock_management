@@ -43,13 +43,13 @@ import { RouterModule } from '@angular/router';
             </a>
           </li>
 
-          <li>
+          <!-- <li>
             <a routerLink="/invoices" routerLinkActive="bg-primary text-white" 
               class="flex items-center px-6 py-3 hover:bg-gray-100 transition-colors">
               <i class="fas fa-file-invoice-dollar w-5 mr-3"></i>
               <span>Invoices</span>
             </a>
-          </li>
+          </li> -->
           
           <li>
             <a routerLink="/reports" routerLinkActive="bg-primary text-white" 
@@ -59,13 +59,13 @@ import { RouterModule } from '@angular/router';
             </a>
           </li>
           
-          <li>
+          <!-- <li>
             <a routerLink="/settings" routerLinkActive="bg-primary text-white" 
               class="flex items-center px-6 py-3 hover:bg-gray-100 transition-colors">
               <i class="fas fa-cog w-5 mr-3"></i>
               <span>Settings</span>
             </a>
-          </li>
+          </li> -->
         </ul>
       </div>
     </aside>

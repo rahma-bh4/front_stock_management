@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ProductService } from '../../services/product.service';
 import { Product } from '../../models/product.model';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-product-detail',
@@ -21,11 +22,11 @@ import { Product } from '../../models/product.model';
         <!-- Product Image -->
         <div class="bg-white rounded-lg shadow-md p-6 flex flex-col items-center">
           <div class="mb-4 w-full h-64 flex items-center justify-center overflow-hidden rounded-lg bg-gray-100">
-            <img 
-              [src]="product.imageUrl || 'assets/images/product-placeholder.png'" 
-              [alt]="product.name"
-              class="max-w-full max-h-full object-contain"
-            >
+           <img 
+  [src]="product.imageUrl ? (apiBaseUrl + product.imageUrl) : 'assets/images/product-placeholder.png'" 
+  [alt]="product.name"
+  class="max-w-full max-h-full object-contain"
+>
           </div>
           
           <div class="mt-6 flex space-x-3 w-full">
@@ -125,7 +126,7 @@ import { Product } from '../../models/product.model';
 export class ProductDetailComponent implements OnInit {
   product: Product | null = null;
   showDeleteModal: boolean = false;
-  
+    apiBaseUrl = environment.fileServerUrl;
   constructor(
     private route: ActivatedRoute,
     private router: Router,

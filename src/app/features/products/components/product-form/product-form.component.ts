@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ProductService } from '../../services/product.service';
 import { Product } from '../../models/product.model';
 import { ImageUploadComponent } from '../../../../shared/components/image-upload/image-upload.component';
-
+import { environment } from '../../../../../environments/environment';
 @Component({
   selector: 'app-product-form',
   standalone: true,
@@ -222,7 +222,7 @@ export class ProductFormComponent implements OnInit {
           price: product.price,
           quantity: product.quantity,
           category: product.category,
-          imageUrl: product.imageUrl,
+          imageUrl: environment.fileServerUrl+product.imageUrl,
           barcode: product.barcode
         });
       },

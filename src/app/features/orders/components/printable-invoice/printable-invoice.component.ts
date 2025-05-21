@@ -1,31 +1,18 @@
+// src/app/features/orders/components/printable-invoice/printable-invoice.component.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { OrderService } from '../../services/order.service';
 import { Invoice } from '../../models/invoice.model';
 import { Order } from '../../models/order.model';
 
 @Component({
-  selector: 'app-invoice-view',
+  selector: 'app-printable-invoice',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule],
   template: `
-    <div class="container mx-auto p-4 non-printable">
-      <div class="mb-6 flex items-center">
-        <button (click)="goBack()" class="text-gray-600 mr-4">
-          <i class="fas fa-arrow-left"></i>
-        </button>
-        <h1 class="text-2xl font-bold text-gray-800">Invoice</h1>
-        <div class="ml-auto">
-          <button (click)="printInvoice()" class="btn btn-primary">
-            <i class="fas fa-print mr-2"></i> Print
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div *ngIf="invoice && order" id="invoice-container" class="bg-white rounded-lg shadow-md p-8 mb-6 mx-auto" style="max-width: 800px;">
-      <!-- Company Logo and Info -->
+    <div class="print-container p-8" *ngIf="invoice && order">
+      <!-- Company Logo and Header -->
       <div class="flex justify-between items-start mb-8">
         <div>
           <div class="text-2xl font-bold text-gray-800 mb-1">INVOICE</div>
@@ -55,9 +42,7 @@ import { Order } from '../../models/order.model';
             <div class="font-medium">{{invoice.dueDate | date:'mediumDate'}}</div>
             
             <div class="text-gray-600">Status:</div>
-            <div [class]="getPaymentStatusClass(invoice.paymentStatus)" class="font-medium">
-              {{invoice.paymentStatus}}
-            </div>
+            <div class="font-medium">{{invoice.paymentStatus}}</div>
           </div>
         </div>
       </div>
@@ -88,22 +73,22 @@ import { Order } from '../../models/order.model';
       </div>
       
       <!-- Totals Section -->
-     <div class="flex justify-end mb-8">
-  <div class="w-72">
-    <div class="flex justify-between py-2">
-      <div class="text-gray-600">Subtotal:</div>
-      <div class="font-medium">{{order.totalAmount | currency}}</div>
-    </div>
-    <div class="flex justify-between py-2">
-      <div class="text-gray-600">Tax (15%):</div>
-      <div class="font-medium">{{invoice.taxAmount | currency}}</div>
-    </div>
-    <div class="flex justify-between py-2 border-t border-gray-200 text-lg font-bold">
-      <div>Total:</div>
-      <div>{{calculateTotal() | currency}}</div>
-    </div>
-  </div>
-</div>
+      <div class="flex justify-end mb-8">
+        <div class="w-72">
+          <div class="flex justify-between py-2">
+            <div class="text-gray-600">Subtotal:</div>
+            <div class="font-medium">{{order.totalAmount | currency}}</div>
+          </div>
+          <div class="flex justify-between py-2">
+            <div class="text-gray-600">Tax (15%):</div>
+            <div class="font-medium">{{invoice.taxAmount | currency}}</div>
+          </div>
+          <div class="flex justify-between py-2 border-t border-gray-200 text-lg font-bold">
+            <div>Total:</div>
+            <div>{{invoice.totalAmount | currency}}</div>
+          </div>
+        </div>
+      </div>
       
       <!-- Footer -->
       <div class="border-t border-gray-200 pt-8">
@@ -115,54 +100,42 @@ import { Order } from '../../models/order.model';
         </div>
       </div>
     </div>
-      
-    <!-- Loading State -->
-    <div *ngIf="!invoice || !order" class="bg-white rounded-lg shadow-md p-6 text-center">
-      <div class="flex flex-col items-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-        <p>Loading invoice...</p>
-      </div>
-    </div>
+
+    <!-- Auto print script -->
+    <script *ngIf="invoice && order">
+      window.onload = function() {
+        window.print();
+      }
+    </script>
   `,
   styles: [`
-    .btn-primary {
-      @apply bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700;
-    }
-    .border-primary {
-      border-color: #3f51b5;
+    .print-container {
+      max-width: 800px;
+      margin: 0 auto;
+      font-family: Arial, sans-serif;
     }
     
     @media print {
-      button, .non-printable {
-        display: none !important;
+      body {
+        margin: 0;
+        padding: 0;
+        font-size: 12pt;
       }
-      #invoice-container {
-        box-shadow: none !important;
-        padding: 0 !important;
-      }
-      body * {
-        visibility: hidden;
-      }
-      #invoice-container, #invoice-container * {
-        visibility: visible;
-      }
-      #invoice-container {
-        position: absolute;
-        left: 0;
-        top: 0;
+      
+      .print-container {
         width: 100%;
+        max-width: 100%;
         padding: 15mm;
       }
     }
   `]
 })
-export class InvoiceViewComponent implements OnInit {
+export class PrintableInvoiceComponent implements OnInit {
   invoice: Invoice | null = null;
   order: Order | null = null;
   
   constructor(
     private route: ActivatedRoute,
-    private router: Router,
     private orderService: OrderService
   ) {}
   
@@ -184,7 +157,6 @@ export class InvoiceViewComponent implements OnInit {
       },
       (error) => {
         console.error('Error loading invoice', error);
-        // Show error notification
       }
     );
   }
@@ -197,7 +169,6 @@ export class InvoiceViewComponent implements OnInit {
       },
       (error) => {
         console.error('Error loading invoice', error);
-        // Show error notification
       }
     );
   }
@@ -206,51 +177,14 @@ export class InvoiceViewComponent implements OnInit {
     this.orderService.getOrderById(orderId).subscribe(
       (order) => {
         this.order = order;
+        // Auto-print once everything is loaded
+        setTimeout(() => {
+          window.print();
+        }, 500);
       },
       (error) => {
         console.error('Error loading order', error);
-        // Show error notification
       }
     );
-  }
-  
-  getPaymentStatusClass(status?: string): string {
-    if (!status) return '';
-    
-    switch (status) {
-      case 'PAID':
-        return 'text-green-600';
-      case 'UNPAID':
-        return 'text-red-600';
-      case 'PARTIAL':
-        return 'text-yellow-600';
-      default:
-        return '';
-    }
-  }
-  
- printInvoice(): void {
-  if (this.invoice) {
-    // Open the printable version in a new window
-    const printWindow = window.open(`/invoices/print/${this.invoice.id}`, '_blank');
-    
-    // Optional: Close the print window after printing (only works if the window was opened by a user action)
-    if (printWindow) {
-      printWindow.addEventListener('afterprint', () => {
-        printWindow.close();
-      });
-    }
-  }
-}
-  calculateTotal(): number {
-  if (!this.order || !this.invoice) return 0;
-  
-  const subtotal = this.order.totalAmount || 0;
-  const taxAmount = this.invoice.taxAmount || 0;
-  
-  return subtotal + taxAmount;
-}
-  goBack(): void {
-    this.router.navigate(['/orders', this.order?.id]);
   }
 }

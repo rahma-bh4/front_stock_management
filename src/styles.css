@@ -92,3 +92,42 @@ body {
   --radius-xl: 0.75rem;
   --radius-full: 9999px;
 }
+
+/* Add this to your global styles.css file */
+
+@media print {
+  /* Hide elements that shouldn't appear in print */
+  app-header, 
+  app-sidebar, 
+  .btn, 
+  button,
+  .non-printable {
+    display: none !important;
+  }
+  
+  /* Make sure the invoice content takes up the full page */
+  #invoice-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 10mm;
+    box-shadow: none !important;
+  }
+  
+  /* Ensure text is black for better printing */
+  body {
+    color: black;
+    background: white;
+  }
+  
+  /* Add page breaks where needed */
+  .page-break-after {
+    page-break-after: always;
+  }
+  
+  /* Remove background colors */
+  .bg-gray-50, .bg-gray-100, .bg-blue-100, .bg-white {
+    background-color: white !important;
+  }
+}
