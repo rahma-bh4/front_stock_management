@@ -88,22 +88,22 @@ import { Order } from '../../models/order.model';
       </div>
       
       <!-- Totals Section -->
-     <div class="flex justify-end mb-8">
-  <div class="w-72">
-    <div class="flex justify-between py-2">
-      <div class="text-gray-600">Subtotal:</div>
-      <div class="font-medium">{{order.totalAmount | currency}}</div>
-    </div>
-    <div class="flex justify-between py-2">
-      <div class="text-gray-600">Tax (15%):</div>
-      <div class="font-medium">{{invoice.taxAmount | currency}}</div>
-    </div>
-    <div class="flex justify-between py-2 border-t border-gray-200 text-lg font-bold">
-      <div>Total:</div>
-      <div>{{calculateTotal() | currency}}</div>
-    </div>
-  </div>
-</div>
+      <div class="flex justify-end mb-8">
+        <div class="w-72">
+          <div class="flex justify-between py-2">
+            <div class="text-gray-600">Subtotal:</div>
+            <div class="font-medium">{{order.totalAmount | currency}}</div>
+          </div>
+          <div class="flex justify-between py-2">
+            <div class="text-gray-600">Tax (15%):</div>
+            <div class="font-medium">{{invoice.taxAmount | currency}}</div>
+          </div>
+          <div class="flex justify-between py-2 border-t border-gray-200 text-lg font-bold">
+            <div>Total:</div>
+            <div>{{calculateTotal() | currency}}</div>
+          </div>
+        </div>
+      </div>
       
       <!-- Footer -->
       <div class="border-t border-gray-200 pt-8">
@@ -133,25 +133,53 @@ import { Order } from '../../models/order.model';
     }
     
     @media print {
-      button, .non-printable {
+      /* Hide non-printable elements */
+      .non-printable,
+      button,
+      .btn {
         display: none !important;
       }
+      
+      /* Reset page margins */
+      @page {
+        margin: 0.5in;
+      }
+      
+      /* Make sure invoice container takes full width */
       #invoice-container {
         box-shadow: none !important;
         padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
       }
-      body * {
-        visibility: hidden;
+      
+      /* Ensure proper text colors for printing */
+      body {
+        color: black !important;
+        background: white !important;
       }
-      #invoice-container, #invoice-container * {
-        visibility: visible;
+      
+      /* Make sure all text is black */
+      * {
+        color: black !important;
+        background: white !important;
       }
-      #invoice-container {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        padding: 15mm;
+      
+      /* Preserve table borders for printing */
+      table, th, td {
+        border-color: #000 !important;
+      }
+      
+      /* Ensure good contrast */
+      .text-gray-600,
+      .text-gray-500 {
+        color: #666 !important;
+      }
+      
+      .font-bold,
+      .font-medium {
+        font-weight: bold !important;
       }
     }
   `]
@@ -229,27 +257,28 @@ export class InvoiceViewComponent implements OnInit {
     }
   }
   
- printInvoice(): void {
-  if (this.invoice) {
-    // Open the printable version in a new window
-    const printWindow = window.open(`/invoices/print/${this.invoice.id}`, '_blank');
-    
-    // Optional: Close the print window after printing (only works if the window was opened by a user action)
-    if (printWindow) {
-      printWindow.addEventListener('afterprint', () => {
-        printWindow.close();
-      });
+  printInvoice(): void {
+    // Simple and reliable print function
+    if (this.invoice && this.order) {
+      // Give a small delay to ensure the DOM is ready
+      setTimeout(() => {
+        window.print();
+      }, 100);
+    } else {
+      console.error('Cannot print: Invoice or Order data is not loaded');
+      alert('Please wait for the invoice to load completely before printing.');
     }
   }
-}
+  
   calculateTotal(): number {
-  if (!this.order || !this.invoice) return 0;
+    if (!this.order || !this.invoice) return 0;
+    
+    const subtotal = this.order.totalAmount || 0;
+    const taxAmount = this.invoice.taxAmount || 0;
+    
+    return subtotal + taxAmount;
+  }
   
-  const subtotal = this.order.totalAmount || 0;
-  const taxAmount = this.invoice.taxAmount || 0;
-  
-  return subtotal + taxAmount;
-}
   goBack(): void {
     this.router.navigate(['/orders', this.order?.id]);
   }

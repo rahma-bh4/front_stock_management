@@ -79,4 +79,5 @@ export class OrderService {
   updateInvoicePaymentStatus(id: number, paymentStatus: string): Observable<Invoice> {
     return this.http.patch<Invoice>(`${this.invoiceApiUrl}/${id}/payment-status?paymentStatus=${paymentStatus}`, {});
   }
+  
 }

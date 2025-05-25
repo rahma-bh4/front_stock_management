@@ -5,7 +5,6 @@ import { SidebarComponent } from './shared/components/sidebar/sidebar.component'
 import { FooterComponent } from './shared/components/footer/footer.component';
 import { CommonModule } from '@angular/common';
 
-// src/app/app.component.ts
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -14,10 +13,10 @@ import { CommonModule } from '@angular/common';
     <div class="flex min-h-screen bg-gray-50">
       <app-sidebar></app-sidebar>
       
-      <div class="flex flex-col w-full md:ml-64">
+      <div class="flex flex-col w-full ml-64">
         <app-header></app-header>
         
-        <main class="flex-grow p-4 pt-16">
+        <main class="flex-grow pt-16 min-h-screen">
           <router-outlet></router-outlet>
         </main>
         
